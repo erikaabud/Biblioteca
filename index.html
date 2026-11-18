@@ -1,0 +1,880 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biblioteca Escolar - Sistema de Gestão</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .cadastro-usuario-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 18px;
+            margin-top: 22px;
+            margin-bottom: 22px;
+        }
+        .cadastro-usuario-grid .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 0;
+        }
+        .cadastro-usuario-grid label {
+            font-weight: 600;
+            font-size: 14px;
+            color: #244361;
+        }
+        .cadastro-usuario-grid .form-input,
+        .cadastro-usuario-grid .form-select {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .campo-obrigatorio {
+            color: #e53935;
+            font-weight: 700;
+        }
+        .cadastro-usuario-acoes {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 12px;
+        }
+        .cadastro-usuario-acoes button {
+            min-height: 45px;
+            padding: 0 25px;
+        }
+        .cadastro-ajuda {
+            color: #687c90;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+        .cadastro-usuario-grid [hidden] {
+            display: none !important;
+        }
+    </style>
+<style>
+  .acoes-solicitacao{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+  .acoes-solicitacao button,.acoes-solicitacao input{min-height:40px;padding:8px 14px;border-radius:9px}
+  .pedido-item{border:1px solid #dbe5ee;border-radius:13px;padding:16px;margin:10px 0;background:#fff;overflow-wrap:anywhere}
+  .pedido-item p{margin:7px 0}.pedido-status{font-weight:700;color:#245477}
+  .book-favorite-btn{z-index:3}
+  .book-modal-acoes-aluno{display:flex;flex-wrap:wrap;gap:10px;margin:15px 0}
+  .book-modal-acoes-aluno button{padding:12px 18px;border-radius:10px}
+  #alunoSearchResults,#alunoFavoritosResults{margin-top:20px}
+</style></head>
+<body>
+
+    <!-- MODAL DE AVISO -->
+    <div id="avisoModal"
+         class="aviso-overlay"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="avisoTitulo"
+         aria-hidden="true">
+        <div class="aviso-card">
+            <div class="aviso-symbol">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            
+            <p id="avisoMensagem"></p>
+            <button type="button" id="avisoOk" class="btn-login">
+                OK
+            </button>
+        </div>
+    </div>
+
+<div id="solicitacaoModal" class="solicitacao-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="solicitacaoTitulo">
+  <form id="solicitacaoForm" class="solicitacao-card">
+    <h2 id="solicitacaoTitulo">Responder solicitação</h2>
+    <label id="solicitacaoCampoData">Nova data de devolução
+      <input id="solicitacaoData" type="date" />
+    </label>
+    <label>Mensagem ao leitor (opcional)
+      <textarea id="solicitacaoMensagem" rows="3"></textarea>
+    </label>
+    <div class="solicitacao-actions"><button type="button" id="solicitacaoCancelar" class="btn-secondary">Cancelar</button><button type="submit" class="btn-primary">Confirmar</button></div>
+  </form>
+</div>
+    <div class="app-container">
+
+        <!-- CARREGAMENTO -->
+        <div id="loadingOverlay" class="loading-overlay" style="display:none;">
+            <div class="spinner"></div>
+            <p>Processando...</p>
+        </div>
+
+        <!-- CABEÇALHO -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo-area">
+                    <i class="fas fa-book-open"></i>
+                    <h1>Biblioteca Escolar</h1>
+                </div>
+            </div>
+        </header>
+
+        <!-- LOGIN -->
+        <div id="loginSection" class="login-container">
+            <section class="login-presentation" aria-label="Apresentação da biblioteca">
+              <div class="presentation-mark"><i class="fas fa-book-open"></i> Biblioteca Escolar</div>
+              <div class="presentation-content">
+                <span class="presentation-label">BIBLIOTECA ESCOLAR</span>
+                <h2>Seu acervo, em um só lugar.</h2>
+                <p>Consulte livros, acompanhe empréstimos e gerencie sua biblioteca.</p>
+              </div>
+
+            </section>
+            <div class="login-card">
+                <div class="login-header">
+                    <div class="login-icon-animation">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h2>Bem-vindo à Biblioteca</h2>
+                    <p>Gestão inteligente do acervo escolar. Entre para acompanhar sua biblioteca.</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="loginEmail">
+                        <i class="fas fa-envelope"></i>
+                        E-mail ou matrícula/RA
+                    </label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="text"
+                               id="loginEmail"
+                               placeholder="E-mail, matrícula ou RA"
+                               autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="loginPassword">
+                        <i class="fas fa-lock"></i> Senha
+                    </label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password"
+                               id="loginPassword"
+                               placeholder="Digite sua senha">
+                        <i class="fas fa-eye-slash toggle-password"
+                           id="togglePassword"></i>
+                    </div>
+                </div>
+
+                <button id="btnLogin" type="button" class="btn-login">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Entrar no Sistema
+                </button>
+
+                <button id="btnAbrirCadastro"
+                        class="btn-secondary btn-register-link"
+                        style="display:none"
+                        aria-hidden="true">
+                    Criar minha conta
+                </button>
+
+                <div class="login-demo">
+                    <p>
+                        <i class="fas fa-shield-alt"></i>
+                        <strong>Sistema Seguro</strong>
+                    </p>
+                    <p>Digite suas credenciais institucionais para acessar o sistema.</p>
+                </div>
+            </div>
+        </div>
+        <div id="perfilModal" class="perfil-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="perfilModalTitulo">
+          <div class="perfil-dialog">
+            <div class="perfil-dialog-head"><h2 id="perfilModalTitulo">Meu perfil</h2><button type="button" id="fecharPerfilModal" aria-label="Fechar">×</button></div>
+            <div id="perfilModalConteudo"></div>
+          </div>
+        </div>
+        <!-- PAINEL PRINCIPAL -->
+        <div id="mainPanel" style="display:none;">
+
+            <div class="top-bar">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="user-details">
+                        <strong id="userNameDisplay">Usuário</strong>
+                        <span class="user-badge" id="userPerfilDisplay"></span>
+                    </div>
+                </div>
+
+                <div id="perfilMenu" class="perfil-menu" hidden>
+                  <button type="button" id="verMeuPerfil">Ver minhas informações</button>
+                  <button type="button" id="editarMeuPerfil">Editar perfil</button>
+                </div>
+                <input type="file" id="fotoPerfilInput" accept="image/*,.heic,.heif,.avif,.bmp,.gif,.tif,.tiff" hidden>
+                <div class="top-actions">
+                    <button id="btnNotifications"
+                            class="icon-btn"
+                            title="Notificações">
+                        <i class="fas fa-bell"></i>
+                        <span id="notificationBadge"
+                              class="notification-badge">0</span>
+                    </button>
+
+                    <button id="btnLogout" class="btn-logout">
+                        <i class="fas fa-sign-out-alt"></i> Sair
+                    </button>
+                </div>
+            </div>
+
+            <!-- NOTIFICAÇÕES -->
+            <div id="notificationsPanel"
+                 class="notifications-panel"
+                 style="display:none;">
+                <div class="notifications-header">
+                    <h4>
+                        <i class="fas fa-bell"></i> Notificações
+                    </h4>
+                    <button id="btnClearNotifications" class="btn-text">
+                        Limpar todas
+                    </button>
+                </div>
+                <div id="notificationsList"
+                     class="notifications-list"></div>
+            </div>
+
+            <!-- PAINEL DO ALUNO -->
+            <div id="alunoPanel">
+            <div id="leitorPortal" style="display:none;">
+            <button id="portalMenuToggle" type="button" aria-expanded="false" aria-controls="portalMenuNav" class="portal-menu-toggle"><i class="fas fa-bars"></i> Menu</button>
+            <nav id="portalMenuNav" class="portal-tabs" aria-label="Navegação do leitor">
+              <button type="button" class="portal-tab active" data-portal-tab="resumo"><i class="fas fa-home"></i> Minha biblioteca</button>
+              <button type="button" class="portal-tab" data-portal-tab="catalogo"><i class="fas fa-book-open"></i> Catálogo e reservas</button>
+              <button type="button" class="portal-tab" data-portal-tab="favoritos"><i class="fas fa-heart"></i> Favoritos</button>
+              <button type="button" class="portal-tab" data-portal-tab="reservas"><i class="fas fa-calendar-check"></i> Minhas reservas</button>
+              <button type="button" class="portal-tab" data-portal-tab="renovacoes"><i class="fas fa-sync"></i> Renovações</button>
+            </nav>
+                <div class="student-page-heading">
+                    <div>
+                        <span class="student-page-kicker">
+                            Portal do estudante
+                        </span>
+                        <h2>
+                            <i class="fas fa-book-reader"></i>
+                            Minha Biblioteca
+                        </h2>
+                        <p>
+                            Consulte os empréstimos registrados pelo
+                            bibliotecário e as datas de devolução.
+                        </p>
+                    </div>
+                </div>
+
+                <section class="portal-pane" data-portal-pane="resumo">
+                <div class="dashboard-grid student-overview">
+                    <div class="dashboard-card full-width">
+                        <div class="card-header">
+                            <i class="fas fa-chart-line card-icon"></i>
+                            <h3>Meu resumo</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="alunoResumo" class="stats-mini"></div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <i class="fas fa-book-reader card-icon"></i>
+                            <h3>Empréstimos em andamento</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="alunoEmprestimosAtivos"
+                                 class="info-list"></div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <i class="fas fa-history card-icon"></i>
+                            <h3>Histórico de devoluções</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="alunoHistoricoLeitura"
+                                 class="info-list"></div>
+                        </div>
+                    </div>
+                </div>
+                </section>
+
+
+            <section class="portal-pane" data-portal-pane="catalogo" hidden>
+              <div class="card portal-card"><h3><i class="fas fa-book-open"></i> Catálogo da biblioteca</h3>
+                <p>Encontre um livro, veja a disponibilidade e solicite sua reserva.</p>
+                <div class="catalogo-search"><i class="fas fa-search" aria-hidden="true"></i><input id="alunoSearchInput" type="search" placeholder="Pesquisar por título, autor ou categoria" aria-label="Pesquisar livros"><button id="btnAlunoSearch" class="btn-primary" type="button">Pesquisar</button></div>
+                <select id="alunoSearchFilter" hidden><option value="all">Todos</option></select>
+                <div id="alunoSearchResults" class="books-grid"></div>
+              </div>
+            </section>
+            <section class="portal-pane" data-portal-pane="favoritos" hidden><div class="card portal-card"><h3><i class="fas fa-heart"></i> Meus favoritos <span id="favoritosCount"></span></h3><div id="alunoFavoritosResults" class="books-grid"></div></div></section>
+            <section class="portal-pane" data-portal-pane="reservas" hidden><div class="card portal-card"><h3><i class="fas fa-calendar-check"></i> Minhas intenções de reserva</h3><div id="minhasReservas"></div></div></section>
+            <section class="portal-pane" data-portal-pane="renovacoes" hidden><div class="card portal-card"><h3><i class="fas fa-sync"></i> Meus pedidos de renovação</h3><p>Solicite a renovação na área de empréstimos. O bibliotecário analisará o pedido.</p><div id="minhasRenovacoes"></div></div></section>
+
+            </div><!-- fim das abas do leitor -->
+            </div><!-- fim da área exclusiva do aluno -->
+
+            <!-- PAINEL DO BIBLIOTECÁRIO -->
+            <div id="bibliotecarioPanel" style="display:none;">
+<button type="button" class="admin-mobile-toggle" id="adminMobileToggle" aria-controls="adminMobileNav" aria-expanded="false"><i class="fas fa-bars"></i> Menu</button>
+
+                <div class="tabs admin-mobile-nav" id="adminMobileNav">
+                    <button class="tab-btn active" data-tab="dashboard">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </button>
+                    <button class="tab-btn" data-tab="busca">
+                        <i class="fas fa-search"></i> Buscar Livros
+                    </button>
+                    <button class="tab-btn" data-tab="emprestimos">
+                        <i class="fas fa-exchange-alt"></i> Empréstimos
+                    </button>
+                    <button class="tab-btn" data-tab="solicitacoes"><i class="fas fa-inbox"></i> Solicitações</button>
+                    <button class="tab-btn" data-tab="cadastroLivro">
+                        <i class="fas fa-plus-circle"></i> Cadastrar Livro
+                    </button>
+                    <button class="tab-btn" data-tab="cadastroUsuario">
+                        <i class="fas fa-user-plus"></i> Cadastrar Usuário
+                    </button>
+                    <button class="tab-btn" data-tab="relatorios">
+                        <i class="fas fa-chart-bar"></i> Relatórios
+                    </button>
+                </div>
+
+                <div class="tab-content">
+
+                    <!-- DASHBOARD -->
+                    <div id="tabDashboard" class="tab-pane active">
+                        <div class="stats-grid">
+
+                            <div class="stat-card-large">
+                                <i class="fas fa-book"></i>
+                                <div class="stat-info">
+                                    <span class="stat-value"
+                                          id="statTotalLivros">0</span>
+                                    <span class="stat-label">
+                                        Total de Livros
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="stat-card-large">
+                                <i class="fas fa-users"></i>
+                                <div class="stat-info">
+                                    <span class="stat-value"
+                                          id="statTotalUsuarios">0</span>
+                                    <span class="stat-label">
+                                        Usuários Ativos
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="stat-card-large">
+                                <i class="fas fa-hand-holding-heart"></i>
+                                <div class="stat-info">
+                                    <span class="stat-value"
+                                          id="statEmprestimosAtivos">0</span>
+                                    <span class="stat-label">
+                                        Empréstimos Ativos
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="stat-card-large">
+                                <i class="fas fa-clock"></i>
+                                <div class="stat-info">
+                                    <span class="stat-value"
+                                          id="statEmprestimosAtrasados">0</span>
+                                    <span class="stat-label">Atrasados</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="two-columns">
+                            <div class="card">
+                                <h3>
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    Alertas de Atraso
+                                </h3>
+                                <div id="alertasAtraso" class="info-list"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BUSCAR LIVROS -->
+                    <div id="tabBusca" class="tab-pane">
+                        <div class="card">
+                            <h3>
+                                <i class="fas fa-search"></i> Busca Avançada
+                            </h3>
+                            <div class="search-area">
+                                <div class="search-input-wrapper">
+                                    <i class="fas fa-search search-icon"></i>
+                                    <input type="text"
+                                           id="biblioSearchInput"
+                                           placeholder="Buscar por título, autor, ISBN ou categoria...">
+                                </div>
+
+                                <select id="biblioSearchFilter"
+                                        class="filter-select">
+                                    <option value="all">Todos</option>
+                                    <option value="nome">Título</option>
+                                    <option value="autor">Autor</option>
+                                    <option value="categoria">Categoria</option>
+                                </select>
+
+                                <button id="btnBiblioSearch"
+                                        class="btn-secondary">
+                                    <i class="fas fa-search"></i> Pesquisar
+                                </button>
+                            </div>
+
+                            <div id="biblioSearchResults"
+                                 class="books-grid"></div>
+                        </div>
+                    </div>
+
+                    <!-- EMPRÉSTIMOS -->
+                    <div id="tabEmprestimos" class="tab-pane">
+                        <div class="two-columns">
+                            <div class="card">
+                                <h3>
+                                    <i class="fas fa-hand-holding-heart"></i>
+                                    Novo Empréstimo
+                                </h3>
+
+                                <div class="form-group">
+                                    <label for="buscaAlunoEmprestimo">
+                                        Aluno:
+                                    </label>
+                                    <input id="buscaAlunoEmprestimo"
+                                           class="form-input"
+                                           type="text"
+                                           placeholder="Digite o nome ou RA do aluno"
+                                           autocomplete="off"
+                                           aria-autocomplete="list"
+                                           aria-controls="sugestoesAlunos">
+
+                                    <div id="sugestoesAlunos"
+                                         class="sugestoes-alunos"
+                                         role="listbox"></div>
+
+                                    <input type="hidden"
+                                           id="selectUserEmprestimo">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="selectLivroEmprestimo">
+                                        Livro:
+                                    </label>
+                                    <select id="selectLivroEmprestimo"
+                                            class="form-select"></select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="diasDevolucao">
+                                        Dias para devolução:
+                                    </label>
+                                    <select id="diasDevolucao"
+                                            class="form-select">
+                                        <option value="7">7 dias</option>
+                                        <option value="14">14 dias</option>
+                                        <option value="21">21 dias</option>
+                                        <option value="30">30 dias</option>
+                                    </select>
+                                </div>
+
+                                <button id="btnRealizarEmprestimo"
+                                        class="btn-success">
+                                    <i class="fas fa-check"></i>
+                                    Realizar Empréstimo
+                                </button>
+                            </div>
+
+                            <div class="card">
+                                <h3>
+                                    <i class="fas fa-undo-alt"></i>
+                                    Registrar Devolução
+                                </h3>
+
+                                <div class="form-group">
+                                    <label for="selectEmprestimoDevolucao">
+                                        Empréstimo Ativo:
+                                    </label>
+                                    <select id="selectEmprestimoDevolucao"
+                                            class="form-select"></select>
+                                </div>
+
+                                <button id="btnRealizarDevolucao"
+                                        class="btn-warning">
+                                    <i class="fas fa-check-double"></i>
+                                    Confirmar Devolução
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>
+                                <i class="fas fa-clock"></i>
+                                Todos os Empréstimos Ativos
+                            </h3>
+                            <div id="emprestimosAtivosList"
+                                 class="info-list"></div>
+                        </div>
+                    </div>
+
+
+                    <!-- SOLICITAÇÕES - SOMENTE BIBLIOTECÁRIO -->
+                    <div id="tabSolicitacoes" class="tab-pane">
+                      <div class="card portal-card"><h3><i class="fas fa-calendar-check"></i> Intenções de reserva dos alunos</h3><p>Aprove ou recuse as solicitações recebidas.</p><div id="pedidosReservaBibliotecario"></div></div>
+                      <div class="card portal-card"><h3><i class="fas fa-sync"></i> Pedidos de renovação</h3><p>Analise as solicitações e defina um novo prazo quando aprovar.</p><div id="pedidosRenovacaoBibliotecario"></div></div>
+                    </div>
+                    <!-- CADASTRAR LIVRO -->
+                    <div id="tabCadastroLivro" class="tab-pane">
+                        <div class="card">
+                            <h3>
+                                <i class="fas fa-plus-circle"></i>
+                                Cadastrar Novo Livro
+                            </h3>
+
+                            <div class="form-row">
+                                <input type="text"
+                                       id="livroNome"
+                                       placeholder="Título do livro"
+                                       class="form-input">
+
+                                <input type="text"
+                                       id="livroAutor"
+                                       placeholder="Autor"
+                                       class="form-input">
+
+                                <input type="text"
+                                       id="livroISBN"
+                                       placeholder="ISBN"
+                                       class="form-input">
+
+                                <input type="text"
+                                       id="livroCategoria"
+                                       placeholder="Categoria"
+                                       class="form-input">
+
+                                <input type="number"
+                                       id="livroQuantidade"
+                                       placeholder="Quantidade"
+                                       class="form-input"
+                                       min="1"
+                                       value="1">
+
+                                <input type="text"
+                                       id="livroEditora"
+                                       placeholder="Editora"
+                                       class="form-input">
+
+                                <input type="text" inputmode="numeric" maxlength="4" pattern="[0-9]{1,4}"
+                                       id="livroAno"
+                                       placeholder="Ano"
+                                       class="form-input">
+
+                                <textarea id="livroSinopse" class="form-input" rows="3" placeholder="Sinopse em português"></textarea>
+                                <label class="capa-upload" for="livroCapaArquivo">
+                                    <span class="capa-upload-icone"><i class="fas fa-cloud-upload-alt"></i></span>
+                                    <span class="capa-upload-texto"><strong>Adicionar capa do livro</strong><small id="livroCapaArquivoNome">Clique para escolher uma imagem PNG, JPG ou WebP (até 4 MB)</small></span>
+                                    <span class="capa-upload-acao">Escolher imagem</span>
+                                    <input type="file" id="livroCapaArquivo" accept="image/png,image/jpeg,image/webp">
+                                </label>
+                                <button id="btnCadastrarLivro"
+                                        class="btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    Cadastrar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>
+                                <i class="fas fa-database"></i>
+                                Acervo da Biblioteca
+                            </h3>
+                            <div id="listaLivrosCadastro"
+                                 class="books-grid"></div>
+                        </div>
+                    </div>
+
+                    <!-- CADASTRO DE USUÁRIOS ATUALIZADO -->
+                    <div id="tabCadastroUsuario" class="tab-pane">
+                        <div class="card">
+                            <h3>
+                                <i class="fas fa-user-plus"></i>
+                                Cadastrar Novo Usuário
+                            </h3>
+
+                            <p class="cadastro-ajuda">
+                                Preencha as informações abaixo.
+                                Os campos com * são obrigatórios.
+                            </p>
+
+                            <div id="formCadastroUsuario"
+                                 class="cadastro-usuario-grid">
+
+                                <div class="form-group">
+                                    <label for="usuarioPerfil">
+                                        Tipo de usuário
+                                        <span class="campo-obrigatorio">*</span>
+                                    </label>
+                                    <select id="usuarioPerfil"
+                                            class="form-select"
+                                            required>
+                                        <option value="aluno">Aluno</option>
+                                        <option value="funcionario">
+                                            Funcionário
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="usuarioNome">
+                                        Nome completo
+                                        <span class="campo-obrigatorio">*</span>
+                                    </label>
+                                    <input type="text"
+                                           id="usuarioNome"
+                                           class="form-input"
+                                           placeholder="Digite o nome completo"
+                                           required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="usuarioEmail">
+                                        E-mail institucional
+                                        <span class="campo-obrigatorio">*</span>
+                                    </label>
+                                    <input type="email"
+                                           id="usuarioEmail"
+                                           class="form-input"
+                                           placeholder="exemplo@escola.com"
+                                           required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="usuarioMatricula"
+                                           id="labelUsuarioMatricula">
+                                        RA do aluno
+                                        <span class="campo-obrigatorio">*</span>
+                                    </label>
+                                    <input type="text"
+                                           id="usuarioMatricula"
+                                           class="form-input"
+                                           placeholder="Digite o RA do aluno"
+                                           required>
+                                </div>
+
+                                <!-- CAMPOS EXCLUSIVOS DO ALUNO -->
+                                <div class="form-group"
+                                     id="campoUsuarioSerie">
+                                    <label for="usuarioSerie">
+                                        Série
+                                        <span class="campo-obrigatorio">*</span>
+                                    </label>
+                                    <input type="text"
+                                           id="usuarioSerie"
+                                           class="form-input"
+                                           placeholder="Ex.: 3º ano"
+                                           required>
+                                </div>
+
+                                <div class="form-group"
+                                     id="campoUsuarioTurma">
+                                    <label for="usuarioTurma">
+                                        Turma / Sala
+                                        <span class="campo-obrigatorio">*</span>
+                                    </label>
+                                    <input type="text"
+                                           id="usuarioTurma"
+                                           class="form-input"
+                                           placeholder="Ex.: 3º A"
+                                           required>
+                                </div>
+
+                                <!-- CAMPO EXCLUSIVO DO FUNCIONÁRIO -->
+                                <div class="form-group"
+                                     id="campoUsuarioSetor"
+                                     style="display:none;"
+                                     hidden>
+                                    <label for="usuarioSetor">
+                                        Setor de trabalho
+                                        <span class="campo-obrigatorio">*</span>
+                                    </label>
+                                    <input type="text"
+                                           id="usuarioSetor"
+                                           class="form-input"
+                                           placeholder="Ex.: Biblioteca"
+                                           disabled>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="usuarioSenha">
+                                        Senha
+                                        <span class="campo-obrigatorio">*</span>
+                                    </label>
+                                    <input type="password"
+                                           id="usuarioSenha"
+                                           class="form-input"
+                                           placeholder="Digite uma senha"
+                                           autocomplete="new-password"
+                                           required>
+                                </div>
+                            </div>
+
+                            <div class="cadastro-usuario-acoes">
+                                <button type="button"
+                                        id="btnCadastrarUsuario"
+                                        class="btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    Cadastrar Usuário
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>
+                                <i class="fas fa-users"></i>
+                                Usuários do Sistema
+                            </h3>
+                            <div id="listaUsuarios"
+                                 class="info-list"></div>
+                        </div>
+                    </div>
+
+                    <!-- RELATÓRIOS -->
+                    <div id="tabRelatorios" class="tab-pane">
+                        <section class="card report-toolbar">
+                          <div class="report-heading"><div><span class="eyebrow">GESTÃO E INDICADORES</span><h3>Relatórios da biblioteca</h3><p>Escolha o período para consultar e exportar empréstimos registrados.</p></div></div>
+                          <div class="report-controls">
+                            <label>Período<select id="relPeriodo" class="form-input">
+                              <option value="7">Semanal — últimos 7 dias</option>
+                              <option value="15">Quinzenal — últimos 15 dias</option>
+                              <option value="30">Mensal — últimos 30 dias</option>
+                              <option value="365">Anual — últimos 365 dias</option>
+                              <option value="custom">Personalizado</option>
+                            </select></label>
+                            <label>Data inicial<input id="relInicio" class="form-input" type="date"></label>
+                            <label>Data final<input id="relFim" class="form-input" type="date"></label>
+                          </div>
+                          <div class="report-actions">
+                            <span id="relResumo" aria-live="polite">Selecione um período.</span>
+                            <div class="report-buttons"><button type="button" id="relPDF" class="btn-primary"><i class="fas fa-file-pdf"></i> Baixar PDF</button><button type="button" id="relExcel" class="btn-primary"><i class="fas fa-file-excel"></i> Baixar Excel</button></div>
+                          </div>
+                        </section>
+                        <div class="card">
+                            <h3>
+                                <i class="fas fa-chart-pie"></i>
+                                Estatísticas da Biblioteca
+                            </h3>
+                            <div id="estatisticas"
+                                 class="stats-container"></div>
+                        </div>
+
+                        <div class="two-columns">
+                            <div class="card">
+                                <h3>
+                                    <i class="fas fa-trophy"></i>
+                                    Ranking de Leitura
+                                </h3>
+                                <div id="rankingLeitores"
+                                     class="info-list"></div>
+                            </div>
+
+                            <div class="card">
+                                <h3>
+                                    <i class="fas fa-fire"></i>
+                                    Livros Mais Populares
+                                </h3>
+                                <div id="rankingLivros"
+                                     class="info-list"></div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>
+                                <i class="fas fa-history"></i>
+                                Histórico Completo
+                            </h3>
+                            <div id="historicoCompleto"
+                                 class="info-list"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE DETALHES DO LIVRO -->
+    <div id="livroModal"
+         class="book-modal"
+         aria-hidden="true">
+        <div class="book-modal-backdrop"
+             data-close-book-modal></div>
+
+        <div class="book-modal-dialog"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="livroModalTitulo">
+
+            <button class="book-modal-close"
+                    data-close-book-modal
+                    aria-label="Fechar">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <div id="livroModalConteudo"
+                 class="book-modal-content"></div>
+        </div>
+    </div>
+
+
+    <!-- MODAL DE EDIÇÃO -->
+    <div id="painelEditarLivro" class="gestao-modal" aria-hidden="true" hidden>
+      <div class="gestao-modal-fundo" data-fechar-edicao></div>
+      <section class="gestao-modal-janela" role="dialog" aria-modal="true" aria-labelledby="tituloEditarLivro">
+        <div class="gestao-modal-topo"><div><span class="gestao-modal-tag">GERENCIAMENTO DO ACERVO</span><h2 id="tituloEditarLivro"><i class="fas fa-pen"></i> Editar livro</h2><p>Atualize as informações do livro selecionado.</p></div><button type="button" class="gestao-modal-fechar" data-fechar-edicao aria-label="Fechar">&times;</button></div>
+        <input type="hidden" id="editarLivroId">
+        <div class="gestao-form-grid">
+          <label class="gestao-campo gestao-largo">Título do livro <input class="form-input" id="editarLivroNome" required></label>
+          <label class="gestao-campo">Autor <input class="form-input" id="editarLivroAutor" required></label>
+          <label class="gestao-campo">ISBN <input class="form-input" id="editarLivroISBN"></label>
+          <label class="gestao-campo">Categoria <input class="form-input" id="editarLivroCategoria" required></label>
+          <label class="gestao-campo">Quantidade <input class="form-input" id="editarLivroQuantidade" type="number" min="1" required></label>
+          <label class="gestao-campo">Editora <input class="form-input" id="editarLivroEditora"></label>
+          <label class="gestao-campo">Ano de publicação <input class="form-input" id="editarLivroAno" type="text" inputmode="numeric" maxlength="4" pattern="[0-9]{1,4}" placeholder="Ex.: 1977"></label>
+          <label class="gestao-campo gestao-largo">Sinopse <textarea class="form-input" id="editarLivroSinopse" rows="4" placeholder="Escreva a sinopse do livro..."></textarea></label>
+          <div class="gestao-campo gestao-largo"><span>Capa do livro</span><div class="gestao-capa-linha"><img id="editarLivroCapaPreview" alt="Prévia da capa atual" class="gestao-capa-preview"><label class="capa-upload" for="editarLivroCapaArquivo"><span class="capa-upload-icone"><i class="fas fa-image"></i></span><span class="capa-upload-texto"><strong>Trocar imagem da capa</strong><small id="editarLivroCapaArquivoNome">PNG, JPG ou WebP (até 4 MB). Deixe vazio para manter a atual.</small></span><span class="capa-upload-acao">Escolher imagem</span><input id="editarLivroCapaArquivo" type="file" accept="image/png,image/jpeg,image/webp"></label></div></div>
+        </div>
+        <div class="gestao-modal-acoes"><button type="button" class="btn-secondary" id="btnCancelarEdicaoLivro">Cancelar</button><button type="button" class="btn-primary" id="btnSalvarEdicaoLivro"><i class="fas fa-check"></i> Salvar alterações</button></div>
+      </section>
+    </div>
+    <!-- MODAL DE EXCLUSÃO -->
+    <div id="modalExcluirLivro" class="gestao-modal" aria-hidden="true" hidden>
+      <div class="gestao-modal-fundo" data-cancelar-exclusao></div>
+      <section class="gestao-modal-janela gestao-modal-pequena" role="alertdialog" aria-modal="true" aria-labelledby="tituloExcluirLivro" aria-describedby="textoExcluirLivro">
+        <div class="gestao-alerta-icone"><i class="fas fa-trash-alt"></i></div>
+        <h2 id="tituloExcluirLivro">Excluir livro do catálogo?</h2>
+        <p id="textoExcluirLivro"></p>
+        <p class="gestao-alerta-nota"><i class="fas fa-info-circle"></i> O histórico de empréstimos será preservado.</p>
+        <div class="gestao-modal-acoes"><button type="button" class="btn-secondary" data-cancelar-exclusao>Cancelar</button><button type="button" class="btn-excluir-confirmar" id="btnConfirmarExcluirLivro">Sim, excluir livro</button></div>
+      </section>
+    </div>
+
+    <!-- VALIDAÇÃO VISUAL DO CADASTRO -->
+
+    <!-- JAVASCRIPT PRINCIPAL -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="javascript/java.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,1 @@
+Alterações: removida a aba Administração, os cartões de Backup e Restauração, Configurações do Sistema e os controles de prazo padrão da interface. Removidos os listeners e funções JS desses controles e as rotas HTTP de configuração e reset. O prazo de cada empréstimo continua definido no formulário de empréstimo. Banco de dados preservado. Preserve seu .env ao atualizar.

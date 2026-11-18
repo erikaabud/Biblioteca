@@ -1,0 +1,13 @@
+RECUPERACAO DO LOGIN DO BIBLIOTECARIO
+
+1. Inicie o MySQL e confira as configuracoes do backend/.env.
+2. Abra o terminal na pasta backend.
+3. Execute: npm install
+4. Execute uma vez: npm run recuperar-bibliotecario
+5. Inicie o servidor: npm run dev
+6. Entre usando ADMIN_EMAIL e ADMIN_PASSWORD definidos no backend/.env.
+
+A chave JWT_SECRET necessaria para autenticacao ja foi adicionada ao .env deste pacote.
+O servidor preserva senhas de contas existentes; por isso, a recuperacao acima e necessaria uma vez para sincronizar a senha configurada.
+NAO importe o SQL de instalacao limpa em banco que ja tenha dados.
+NAO compartilhe o arquivo .env.
